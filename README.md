@@ -60,9 +60,6 @@ This tool is designed to simplify the process of comparing two CSV files and gen
 
 Contributions are welcome! If you have any suggestions, feature requests, or bug reports, please feel free to open an issue or submit a pull request. Your feedback is valuable in improving the functionality and usability of the tool for the community.
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## About the Author
 
