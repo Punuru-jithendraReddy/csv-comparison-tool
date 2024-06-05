@@ -2,13 +2,15 @@
 
 ## Overview
 
-This tool allows users to compare two CSV files and generate a comprehensive Excel report with three sheets. The sheets detail the differences between the files column by column, compare the columns and their data types, and provide statistical summaries of the data in each file.
+This tool is designed to simplify the process of comparing two CSV files and generating a comprehensive Excel report summarizing the differences between them. It provides users with detailed insights into the data consistency, column structure, and statistical characteristics of the files.
 
 ## Features
 
-1. **Sheet 1**: Compares the source and target files column by column, showing the source values, target values, and whether they match.
-2. **Sheet 2**: Compares the columns of both files, listing the column names and their data types.
-3. **Sheet 3**: Provides descriptive statistics (count, mean, standard deviation, min, max, 25%, 50%, 75%) for both files.
+1. **Sheet 1 - Column Comparison**: This sheet compares the source and target files column by column, highlighting differences in values and indicating whether they match. Users can easily identify discrepancies and inconsistencies between corresponding columns in the two files.
+
+2. **Sheet 2 - Column Metadata**: Here, users can compare the metadata of columns in both files, including their names and data types. This sheet helps ensure that the column structure remains consistent across the files, facilitating data integrity and compatibility.
+
+3. **Sheet 3 - Statistical Summary**: This sheet provides a statistical summary of the data in each file, including count, mean, standard deviation, minimum, maximum, and percentile values. Users can gain valuable insights into the distribution and characteristics of the data, aiding in data analysis and decision-making processes.
 
 ## Requirements
 
@@ -27,7 +29,9 @@ This tool allows users to compare two CSV files and generate a comprehensive Exc
 
 2. **Install the required Python packages:**
     ```bash
-    pip install pandas numpy openpyxl
+    pip install pandas
+    pip install numpy
+    pip install openpyxl
     ```
 
 ## Usage
@@ -43,15 +47,23 @@ This tool allows users to compare two CSV files and generate a comprehensive Exc
     Enter the Name/Path of the Target File: path/to/target_file.csv
     ```
 
-3. **The program will generate an Excel file with the comparison results.**
+3. **Review the generated Excel report:**  
+   Once the script completes execution, you will find an Excel file named according to the source file with "_Result" appended. This file contains the comparison results across the three sheets, providing a comprehensive overview of the differences between the source and target files.
 
-## Code Explanation
+## Additional Notes
 
-### Functions
+- This tool is developed to address common challenges in data comparison tasks, such as verifying data consistency, ensuring column alignment, and analyzing data distributions.
+- It offers a user-friendly interface, allowing users to quickly identify and address discrepancies between files.
+- The tool is highly customizable and can be easily extended to accommodate additional comparison criteria or data processing requirements.
 
-1. **get_file_name(file_path)**: Extracts the file name from the provided file path.
-2. **Name(f_name)**: Processes the file name to generate a result file name and title.
-3. **Sheet_1(source_File, Target_File)**: Compares the source and target files column by column.
-4. **Sheet_2(source_File, Target_File)**: Checks whether the columns of both files are the same and compares their data types.
-5. **Sheet_3(source_File, Target_File)**: Provides descriptive statistics for both files.
-6. **Create_file(source_File, Target_File)**: Orchestrates the creation of the Excel file, combining the results from the other functions.
+## Contributing
+
+Contributions are welcome! If you have any suggestions, feature requests, or bug reports, please feel free to open an issue or submit a pull request. Your feedback is valuable in improving the functionality and usability of the tool for the community.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## About the Author
+
+This tool is developed and maintained by Punuru Jithendra Reddy, a passionate software engineer with expertise in data analysis and automation. You can find more of my projects and contributions on [GitHub](https://github.com/Punuru-jithendraReddy).
