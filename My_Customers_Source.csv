@@ -1,0 +1,26 @@
+Cust_Id,First_Name,Last_Name,Gender,Create Date,Purchase Date,Delivery_Date,Product_Category,Product_Name,Quantity,Unit_Price,Last_Update
+111,Rita,Jain,F,20-Aug-2000,08/23/2022,08/30/2022,Electronics,Laptop,2,₹ 50000.00,2023-01-23 14:49:45.738
+112,Sameer ,Kumar,M,12-Jan-2000,08/24/2022,09/15/2022,Electronics,Wireless Mouse,5,₹ 2500.00,2023-01-14 14:49:45.738
+113,Sumit,Gaur,Male,20-Aug-2002,08/25/2022,08/29/2022,Electronics,Tablet,2,₹ 13000.00,2023-01-15 14:49:45.738
+114,Nirbhay,Bhadani ,Male,12-Jan-2000,08/23/2022,08/30/2022,Furniture,Chair,7,,
+115,Santosh,Kumar,Male,20-Aug-2000,04/19/2022,04/30/2022,Furniture,Table,1,,
+116,Elizabeth,Brown,Female,12-Jan-2000,9/24/2022,10/24/2022,Furniture,Chair,7,₹ 5000.00,2023-01-05 14:49:45.738
+117,Jennifer,Davis,,20-Aug-2002,12/25/2022,12/30/2022,Furniture,Table,2,₹ 8000.00,2023-01-18 14:49:45.738
+118,Maria,Miller,,14-Feb-2000,10/26/2022,11/15/2022,Stationary,Pen,10,₹ 300.00,2023-01-19 14:49:45.738
+119,Simmy ,Jha,Female,20-Aug-2002,12/30/2022,01/16/2022,Stationary,Pen,12,₹ 200.00,2023-01-23 14:49:45.738
+120,Abjeet,Kumar,Male,16-Sep-2000,8/23/2022,8/30/2022,Furniture,Table,4,₹ 5000.00,2023-01-14 14:49:45.738
+121,Santosh,Kumar,,23-Jan-2000,08/25/2022,09/13/2022,Furniture,Chair,11,₹ 2500.00,2023-01-15 14:49:45.738
+122,Naveen,Kumar,M,23-Feb-2000,08/23/2022,09/19/2022,Furniture,Chair,5,₹ 12000.00,2023-01-17 14:49:45.738
+123,Paul,Smith,,24-Sep-2000,08/23/2022,08/30/2022,Electronics,Laptop,1,₹ 24500.00,2023-01-19 14:49:45.738
+124,Saurabh,kumar,M,20-Aug-2002,08/24/2022,08/30/2022,Stationary,Pen,20,₹ 35.00,2023-01-05 14:49:45.738
+125,Sonali,,F,25-Mar-2000,08/25/2022,09/13/2022,,,,,2023-01-18 14:49:45.738
+126,Rajeshree,Dutta,Female,15-Mar-2000,08/23/2022,09/13/2022,,,,,2023-01-19 14:49:45.738
+127,Vinodh,Kumar,Male,20-Aug-2002,08/23/2022,08/30/2022,Electronics,Laptop,1,₹ 75000.00,2023-01-23 14:49:45.738
+128,Suman,Adhikari,male,23-Oct-2000,08/24/2022,08/30/2022,Electronics,Wireless Mouse,5,₹ 2300.00,2023-01-14 14:49:45.738
+129,John,Miller,male,20-Aug-2002,08/25/2022,08/30/2022,Electronics,Wireless Mouse,3,₹ 15000.00,2023-01-15 14:49:45.738
+130,Paul,Smith,male,29-Nov-2000,08/23/2022,08/30/2022,Electronics,Wireless Mouse,7,₹ 1340.00,2023-01-17 14:49:45.738
+131,Ron,Cody,m,20-Aug-2002,08/23/2022,08/30/2022,Electronics,Laptop,2,₹ 45690.00,2023-01-19 14:49:45.738
+132,James,Brown,m,04-Dec-2000,08/24/2022,08/30/2022,Sports,Bicycle,5,₹ 15000.00,2023-01-05 14:49:45.738
+133,Sushmita,Pandey,F,20-Aug-2002,08/25/2022,08/30/2022,Sports,Bicycle,3,₹ 12000.00,2023-01-18 14:49:45.738
+134,Sushil,Kumar,M,13-Feb-2000,08/23/2022,08/30/2022,Sports,Bicycle,9,₹ 13400.00,2023-01-19 14:49:45.738
+135,Rohit,Kumar,M,20-Aug-2002,08/25/2022,08/30/2022,Furniture,Table,2,₹ 25000.00,2023-01-05 14:49:45.738

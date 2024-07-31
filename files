@@ -93,10 +93,11 @@ def Sheet_3(source_File, Target_File):
     return df_new
 
 def Create_file(source_File, Target_File):
+    ''' Function to create the final excel sheet with the help of all the above functions '''
     df_S1 = Sheet_1(source_File, Target_File)
     df_S2 = Sheet_2(source_File, Target_File)
     df_S3 = Sheet_3(source_File, Target_File)
-    
+
     f_name = get_file_name(source_File)
     Names = Name(f_name)
     File_Name = Names[0]
@@ -105,10 +106,33 @@ def Create_file(source_File, Target_File):
         df_S1.to_excel(writer, sheet_name='Sheet1')
         df_S2.to_excel(writer, sheet_name='Sheet2')
         df_S3.to_excel(writer, sheet_name='Sheet3')
+    
+    # Load the created Excel file
+    wb = load_workbook(File_Name)
+    
+    # Highlight "FALSE" cells in yellow in Sheet1
+    sheet1 = wb['Sheet1']
+    yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+    
+    for row in sheet1.iter_rows(min_row=2, max_row=sheet1.max_row, min_col=1, max_col=sheet1.max_column):
+        for cell in row:
+            if cell.value == 'FALSE':
+                cell.fill = yellow_fill
+
+    # Delete the unnecessary rows created while assigning the multilevel index
+    sheet1.delete_rows(4)
+    sheet2 = wb['Sheet2']
+    sheet2.delete_rows(3)
+    sheet3 = wb['Sheet3']
+    sheet3.delete_rows(3)
+    
+    # Save the updated Excel file
+    wb.save(File_Name)
 
     print("\nThe source and target files have been successfully compared.\n")
 
-if __name__ == "__main__":
-    source_File = input("Enter the Name/Path of the Source File: ")
-    Target_File = input("Enter the Name/Path of the Target File: ")
-    Create_file(source_File, Target_File)
+
+source_File = 'My_Customers_Source.csv' #input("Enter the Name/Path of the Source File : ")
+Target_File = 'My_Customers_Target.csv' #input("Enter the Name/Path of the Target File : ")
+
+Create_file(source_File, Target_File)
