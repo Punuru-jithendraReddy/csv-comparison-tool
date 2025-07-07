@@ -1,66 +1,105 @@
-# CSV File Comparison Tool
+# CSV & Excel Comparison Tool
 
-## Overview
+## 🔍 Overview
 
-This tool is designed to simplify the process of comparing two CSV files and generating a comprehensive Excel report summarizing the differences between them. It provides users with detailed insights into the data consistency, column structure, and statistical characteristics of the files.
+This tool is designed to **compare two CSV or Excel files** and generate a detailed Excel report summarizing their differences. It supports value-by-value comparison, column metadata inspection, statistical summaries, unique row detection, and identification of unique values in non-numeric columns.
 
-## Features
+## ✅ Key Features
 
-1. **Sheet 1 - Column Comparison**: This sheet compares the source and target files column by column, highlighting differences in values and indicating whether they match. Users can easily identify discrepancies and inconsistencies between corresponding columns in the two files.
+### 📄 Sheet 1 – **Value Comparison**
 
-2. **Sheet 2 - Column Metadata**: Here, users can compare the metadata of columns in both files, including their names and data types. This sheet helps ensure that the column structure remains consistent across the files, facilitating data integrity and compatibility.
+* Compares matching columns **cell-by-cell** between the source and target files.
+* Flags mismatches as `FALSE` and highlights them in **yellow** for easy review.
 
-3. **Sheet 3 - Statistical Summary**: This sheet provides a statistical summary of the data in each file, including count, mean, standard deviation, minimum, maximum, and percentile values. Users can gain valuable insights into the distribution and characteristics of the data, aiding in data analysis and decision-making processes.
+### 🧱 Sheet 2 – **Column Metadata**
 
-## Requirements
+* Displays column names and data types from both files.
+* Highlights missing or mismatched columns with a **red background**.
 
-- Python 3.x
-- Pandas
-- NumPy
-- Openpyxl
+### 📊 Sheet 3 – **Summary Stats**
 
-## Installation
+* Provides **statistical summaries** (count, mean, std, min, max, percentiles) for numeric columns.
+* Helps quickly analyze data distributions across files.
 
-1. **Clone the repository:**
-    ```bash
-    git clone https://github.com/Punuru-jithendraReddy/csv-comparison-tool.git
-    cd csv-comparison-tool
-    ```
+### 📌 Sheet 4 – **Row Differences**
 
-2. **Install the required Python packages:**
-    ```bash
-    pip install pandas
-    pip install numpy
-    pip install openpyxl
-    ```
+* Performs a **row-level comparison** on all common columns.
+* Flags rows unique to either source or target and those common to both.
 
-## Usage
+### 🔠 Sheet 5 – **Unique Non-Numeric Values**
 
-1. **Run the script:**
-    ```bash
-    python compare_csv.py
-    ```
+* Compares only **non-numeric columns**.
+* Shows values **unique to each file**, grouped by column.
+* Automatically **removes the third row** from this sheet after creation (custom rule).
 
-2. **Enter the file paths when prompted:**
-    ```text
-    Enter the Name/Path of the Source File: path/to/source_file.csv
-    Enter the Name/Path of the Target File: path/to/target_file.csv
-    ```
+## ⚙️ Requirements
 
-3. **Review the generated Excel report:**  
-   Once the script completes execution, you will find an Excel file named according to the source file with "_Result" appended. This file contains the comparison results across the three sheets, providing a comprehensive overview of the differences between the source and target files.
+* Python 3.x
+* [pandas](https://pypi.org/project/pandas/)
+* [numpy](https://pypi.org/project/numpy/)
+* [openpyxl](https://pypi.org/project/openpyxl/)
 
-## Additional Notes
+## 💾 Installation
 
-- This tool is developed to address common challenges in data comparison tasks, such as verifying data consistency, ensuring column alignment, and analyzing data distributions.
-- It offers a user-friendly interface, allowing users to quickly identify and address discrepancies between files.
-- The tool is highly customizable and can be easily extended to accommodate additional comparison criteria or data processing requirements.
+```bash
+git clone https://github.com/Punuru-jithendraReddy/csv-comparison-tool.git
+cd csv-comparison-tool
+pip install -r requirements.txt
+```
 
-## Contributing
+> Or install individually:
 
-Contributions are welcome! If you have any suggestions, feature requests, or bug reports, please feel free to open an issue or submit a pull request. Your feedback is valuable in improving the functionality and usability of the tool for the community.
+```bash
+pip install pandas numpy openpyxl
+```
 
+## 🚀 Usage
 
-## About the Author
+Run the script using Python:
 
-This tool is developed and maintained by Punuru Jithendra Reddy, a passionate software engineer with expertise in data analysis and automation. You can find more of my projects and contributions on [GitHub](https://github.com/Punuru-jithendraReddy).
+```bash
+python compare_csv.py
+```
+
+When prompted, enter the required inputs:
+
+```
+Enter the header row number (e.g., 2 for row 2) in the source file: 2
+Enter the header row number (e.g., 2 for row 2) in the target file: 2
+```
+
+Once completed, an output Excel file will be generated in the current directory, named:
+
+```
+<SourceFileName>_Result.xlsx
+```
+
+## 📘 Output Overview
+
+| Sheet Name       | Description                                  |
+| ---------------- | -------------------------------------------- |
+| Value Comparison | Cell-by-cell comparison for shared columns   |
+| Column Metadata  | Column name and data type comparison         |
+| Summary Stats    | Descriptive statistics of numeric columns    |
+| Row Differences  | Unique rows from both files                  |
+| Unique Values    | Column-wise unique values (non-numeric only) |
+
+## 🧠 Notes
+
+* Supports both `.csv` and `.xlsx` files.
+* Automatically deletes any existing result file to avoid overwrite prompts.
+* Handles flexible header row positions via user input.
+* Highlights mismatches and missing fields using color-coded styles.
+* Skips entirely blank or perfectly matched columns and rows.
+
+## 🤝 Contributing
+
+Feel free to fork the repository and submit pull requests. Suggestions, bug fixes, and feature enhancements are welcome.
+
+## 👨‍💻 About the Author
+
+Developed and maintained by **Punuru Jithendra Reddy**, a data automation enthusiast.
+Explore more projects and tools at [GitHub - @Punuru-jithendraReddy](https://github.com/Punuru-jithendraReddy)
+
+---
+
