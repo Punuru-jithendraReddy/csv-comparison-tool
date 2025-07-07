@@ -1,0 +1,246 @@
+import pandas as pd
+import numpy as np
+import os
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
+
+def get_header_row(file_label):
+    while True:
+        try:
+            value = input(f"Enter the header row number (e.g., 2 for row 2) in the {file_label} file: ").strip()
+            if value == "":
+                print("Defaulting to row 1.")
+                return 0
+            row = int(value)
+            if row < 1:
+                raise ValueError
+            return row - 1
+        except ValueError:
+            print("❌ Please enter a valid row number (1 or higher).")
+
+def read_file(file_path, header_row=0, sheet_name=None):
+    ext = os.path.splitext(file_path)[1].lower()
+    if ext in ['.xlsx', '.xls']:
+        df = pd.read_excel(file_path, sheet_name=sheet_name, header=0, skiprows=header_row)
+        return list(df.values())[0] if isinstance(df, dict) else df
+    elif ext == '.csv':
+        return pd.read_csv(file_path, header=0, skiprows=header_row)
+    else:
+        raise ValueError(f"Unsupported file type: {ext}")
+
+def get_file_name(file_path):
+    return os.path.basename(file_path)
+
+def Name(f_name):
+    parts = f_name.split("_")
+    parts.pop()
+    parts.append("Result")
+    File_Name = "_".join(parts) + ".xlsx"
+    Title = "_".join(parts)
+    return File_Name, Title
+
+def Sheet_1(source_File, Target_File, s_hr, t_hr):
+    df1 = read_file(source_File, header_row=s_hr).reset_index(drop=True)
+    df2 = read_file(Target_File, header_row=t_hr).reset_index(drop=True)
+    common_cols = df1.columns.intersection(df2.columns)
+    if len(common_cols) < 1:
+        return pd.DataFrame({"No common columns": [""]})
+
+    df_new = pd.DataFrame()
+    subheadings = ["Source", "Target", "Result"]
+
+    max_len = max(len(df1), len(df2))
+    df1 = df1.reindex(range(max_len))
+    df2 = df2.reindex(range(max_len))
+
+    for col in common_cols:
+        df_temp = pd.DataFrame()
+        df_temp["Source"] = df1[col]
+        df_temp["Target"] = df2[col]
+        df_temp["Result"] = ((df1[col].isnull() & df2[col].isnull()) | (df1[col] == df2[col])).astype(str).str.upper()
+        df_new = pd.concat([df_new, df_temp], axis=1, ignore_index=True)
+
+    flat_columns = []
+    for col in common_cols:
+        for sub in subheadings:
+            flat_columns.append(f"{col}_{sub}")
+    df_new.columns = flat_columns
+    df_new.dropna(how='all', inplace=True)
+    return df_new
+
+def Sheet_2(source_File, Target_File, s_hr, t_hr):
+    df1 = read_file(source_File, header_row=s_hr)
+    df2 = read_file(Target_File, header_row=t_hr)
+
+    s_cols = list(df1.columns)
+    s_dtypes = [str(df1[col].dtype) for col in s_cols]
+    t_cols, t_dtypes = [], []
+
+    for col in s_cols:
+        if col in df2.columns:
+            t_cols.append(col)
+            t_dtypes.append(str(df2[col].dtype))
+        else:
+            t_cols.append("-")
+            t_dtypes.append("-")
+
+    return pd.DataFrame({
+        'Source_Columns': s_cols,
+        'Source_Dtype': s_dtypes,
+        'Target_Columns': t_cols,
+        'Target_Dtype': t_dtypes
+    })
+
+def Sheet_3(source_File, Target_File, s_hr, t_hr):
+    df1 = read_file(source_File, header_row=s_hr)
+    df2 = read_file(Target_File, header_row=t_hr)
+    desc1 = df1.describe()
+    desc2 = df2.describe()
+    desc1.columns = pd.MultiIndex.from_product([["Source"], desc1.columns])
+    desc2.columns = pd.MultiIndex.from_product([["Target"], desc2.columns])
+    return pd.concat([desc1, desc2], axis=1)
+
+def Sheet_4(source_File, Target_File, s_hr, t_hr):
+    df1 = read_file(source_File, header_row=s_hr).drop_duplicates()
+    df2 = read_file(Target_File, header_row=t_hr).drop_duplicates()
+    common_cols = df1.columns.intersection(df2.columns)
+    if not common_cols.any():
+        return pd.DataFrame({"Result": ["No common columns to compare row-wise"]})
+    merged = pd.merge(df1[common_cols], df2[common_cols], how='outer', indicator=True)
+    merged['Comparison Result'] = merged['_merge'].map({
+        'left_only': 'Source Only',
+        'right_only': 'Target Only',
+        'both': 'Both'
+    })
+    merged.drop(columns=['_merge'], inplace=True)
+    return merged[['Comparison Result'] + common_cols.tolist()]
+
+def Sheet_5(source_File, Target_File, s_hr, t_hr):
+    df1 = read_file(source_File, header_row=s_hr)
+    df2 = read_file(Target_File, header_row=t_hr)
+
+    # ❗ Select only non-numeric columns from both dataframes
+    non_numeric_cols = df1.select_dtypes(exclude=[np.number]).columns
+    common_cols = non_numeric_cols.intersection(df2.select_dtypes(exclude=[np.number]).columns)
+
+    if not common_cols.any():
+        return pd.DataFrame({"Result": ["No common non-numeric columns to compare"]})
+
+    all_results = []
+
+    for col in common_cols:
+        s_unique = set(df1[col].dropna().astype(str).unique())
+        t_unique = set(df2[col].dropna().astype(str).unique())
+
+        source_only = sorted(list(s_unique - t_unique))
+        target_only = sorted(list(t_unique - s_unique))
+
+        if not source_only and not target_only:
+            continue
+
+        max_len = max(len(source_only), len(target_only))
+        source_only += [""] * (max_len - len(source_only))
+        target_only += [""] * (max_len - len(target_only))
+
+        temp_df = pd.DataFrame({
+            (col, "Only in Source"): source_only,
+            (col, "Only in Target"): target_only
+        })
+
+        all_results.append(temp_df)
+
+    if not all_results:
+        return pd.DataFrame({"Result": ["No unmatched values in any non-numeric column"]})
+
+    final_df = pd.concat(all_results, axis=1)
+    final_df.columns = pd.MultiIndex.from_tuples(final_df.columns)
+    return final_df
+
+
+def Create_file(source_File, Target_File, s_hr, t_hr):
+    f_name = get_file_name(source_File)
+    File_Name, _ = Name(f_name)
+    if os.path.exists(File_Name):
+        try:
+            os.remove(File_Name)
+            print(f"⚠️ Existing result file '{File_Name}' deleted.")
+        except Exception as e:
+            print(f"❌ Cannot delete '{File_Name}': {e}")
+            raise
+
+    df_S1 = Sheet_1(source_File, Target_File, s_hr, t_hr)
+    df_S2 = Sheet_2(source_File, Target_File, s_hr, t_hr)
+    df_S3 = Sheet_3(source_File, Target_File, s_hr, t_hr)
+    df_S4 = Sheet_4(source_File, Target_File, s_hr, t_hr)
+    df_S5 = Sheet_5(source_File, Target_File, s_hr, t_hr)
+
+    with pd.ExcelWriter(File_Name, engine='openpyxl') as writer:
+        df_S1.to_excel(writer, sheet_name='Value Comparison', index=False)
+        df_S2.to_excel(writer, sheet_name='Column Metadata', index=False)
+        df_S3.to_excel(writer, sheet_name='Summary Stats')
+        df_S4.to_excel(writer, sheet_name='Row Differences', index=False)
+        df_S5.to_excel(writer, sheet_name='Unique Values')
+
+    wb = load_workbook(File_Name)
+    yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+    red_fill = PatternFill(start_color='FFCCCC', end_color='FFCCCC', fill_type='solid')
+
+    sheet = wb['Value Comparison']
+    for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row):
+        for cell in row:
+            if str(cell.value).strip().upper() == "FALSE":
+                cell.fill = yellow_fill
+
+    sheet = wb['Column Metadata']
+    for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row):
+        for cell in row:
+            if cell.value == "-":
+                cell.fill = red_fill
+
+    # Delete row 3 from 'Unique Values' sheet
+    try:
+        sheet = wb['Unique Values']
+        sheet.delete_rows(3)
+        #print("🗑️ Deleted 3rd row from 'Unique Values' sheet.")
+    except Exception as e:
+        print(f"⚠️ Could not delete 3rd row from 'Unique Values': {e}")
+    try:
+        sheet = wb['Summary Stats']
+        sheet.delete_rows(3)
+        #print("🗑️ Deleted 3rd row from 'Summary Stats' sheet.")
+    except Exception as e:
+        print(f"⚠️ Could not delete 3rd row from 'Summary Stats': {e}")
+
+    wb.save(File_Name)
+    print(f"\n✅ Comparison file created: {File_Name}\n")
+
+if __name__ == "__main__":
+
+    source_File = 'My_Customers_Source.xlsx'
+    Target_File = 'My_Customers_Target.xlsx'
+
+    print("🔍 Checking file paths...")
+    if not os.path.exists(source_File) or not os.path.exists(Target_File):
+        print("❌ One or both file paths are invalid.")
+    else:
+        print("✅ Files found. Proceeding with header row detection...")
+        try:
+            source_header_row = get_header_row("source")
+            print(f"✅ Source header row detected at line {source_header_row + 1}")
+        except Exception as e:
+            print(f"❌ Failed to detect source header row: {e}")
+            exit()
+
+        try:
+            target_header_row = get_header_row("target")
+            print(f"✅ Target header row detected at line {target_header_row + 1}")
+        except Exception as e:
+            print(f"❌ Failed to detect target header row: {e}")
+            exit()
+
+        print("🚀 Starting comparison process...")
+        try:
+            Create_file(source_File, Target_File, source_header_row, target_header_row)
+            print("✅ Comparison completed successfully.")
+        except Exception as e:
+            print(f"❌ Comparison process failed: {e}")
