@@ -1,105 +1,133 @@
-# CSV & Excel Comparison Tool
 
-## 🔍 Overview
 
-This tool is designed to **compare two CSV or Excel files** and generate a detailed Excel report summarizing their differences. It supports value-by-value comparison, column metadata inspection, statistical summaries, unique row detection, and identification of unique values in non-numeric columns.
+---
 
-## ✅ Key Features
+# Excel File Comparison Tool (Tkinter GUI)
 
-### 📄 Sheet 1 – **Value Comparison**
+This Python project is a GUI-based tool for comparing two Excel files. It supports multiple comparison modes:
 
-* Compares matching columns **cell-by-cell** between the source and target files.
-* Flags mismatches as `FALSE` and highlights them in **yellow** for easy review.
+* Column names
+* Row-by-row content
+* Unique values in each column
+* Summary statistics (for numerical data)
 
-### 🧱 Sheet 2 – **Column Metadata**
+The tool produces an Excel file with individual sheets for each comparison type.
 
-* Displays column names and data types from both files.
-* Highlights missing or mismatched columns with a **red background**.
+---
 
-### 📊 Sheet 3 – **Summary Stats**
+## Features
 
-* Provides **statistical summaries** (count, mean, std, min, max, percentiles) for numeric columns.
-* Helps quickly analyze data distributions across files.
+1. Column Comparison
 
-### 📌 Sheet 4 – **Row Differences**
+   * Displays column names side-by-side.
+   * Highlights mismatched column names in red.
 
-* Performs a **row-level comparison** on all common columns.
-* Flags rows unique to either source or target and those common to both.
+2. Row-by-Row Comparison
 
-### 🔠 Sheet 5 – **Unique Non-Numeric Values**
+   * Compares rows based on content.
+   * Adds a `Status` column with: Match, Only in Source, or Only in Target.
 
-* Compares only **non-numeric columns**.
-* Shows values **unique to each file**, grouped by column.
-* Automatically **removes the third row** from this sheet after creation (custom rule).
+3. Unique Value Comparison
 
-## ⚙️ Requirements
+   * Lists unique values from both files, separated into Only in Source and Only in Target.
 
-* Python 3.x
-* [pandas](https://pypi.org/project/pandas/)
-* [numpy](https://pypi.org/project/numpy/)
-* [openpyxl](https://pypi.org/project/openpyxl/)
+4. Summary Statistics
 
-## 💾 Installation
+   * Provides statistical comparison (mean, median, min, max, std) for numeric columns.
 
-```bash
-git clone https://github.com/Punuru-jithendraReddy/csv-comparison-tool.git
-cd csv-comparison-tool
+---
+
+## How to Use
+
+### Step 1: Clone or Download the Project
+
+Download this project or clone it from GitHub:
+
+```
+git clone https://github.com/your-username/excel-comparison-tool.git
+cd excel-comparison-tool
+```
+
+---
+
+### Step 2: Install Required Libraries
+
+Make sure Python 3.8 or above is installed.
+Install the required libraries using pip:
+
+```
+pip install pandas openpyxl numpy ttkbootstrap
+```
+
+Or using a `requirements.txt` file:
+
+```
+pandas
+openpyxl
+numpy
+ttkbootstrap
+```
+
+Then run:
+
+```
 pip install -r requirements.txt
 ```
 
-> Or install individually:
+---
 
-```bash
-pip install pandas numpy openpyxl
-```
-
-## 🚀 Usage
-
-Run the script using Python:
-
-```bash
-python compare_csv.py
-```
-
-When prompted, enter the required inputs:
+### Step 3: Run the GUI Tool
 
 ```
-Enter the header row number (e.g., 2 for row 2) in the source file: 2
-Enter the header row number (e.g., 2 for row 2) in the target file: 2
+python excel_comparator_gui.py
 ```
-
-Once completed, an output Excel file will be generated in the current directory, named:
-
-```
-<SourceFileName>_Result.xlsx
-```
-
-## 📘 Output Overview
-
-| Sheet Name       | Description                                  |
-| ---------------- | -------------------------------------------- |
-| Value Comparison | Cell-by-cell comparison for shared columns   |
-| Column Metadata  | Column name and data type comparison         |
-| Summary Stats    | Descriptive statistics of numeric columns    |
-| Row Differences  | Unique rows from both files                  |
-| Unique Values    | Column-wise unique values (non-numeric only) |
-
-## 🧠 Notes
-
-* Supports both `.csv` and `.xlsx` files.
-* Automatically deletes any existing result file to avoid overwrite prompts.
-* Handles flexible header row positions via user input.
-* Highlights mismatches and missing fields using color-coded styles.
-* Skips entirely blank or perfectly matched columns and rows.
-
-## 🤝 Contributing
-
-Feel free to fork the repository and submit pull requests. Suggestions, bug fixes, and feature enhancements are welcome.
-
-## 👨‍💻 About the Author
-
-Developed and maintained by **Punuru Jithendra Reddy**, a data automation enthusiast.
-Explore more projects and tools at [GitHub - @Punuru-jithendraReddy](https://github.com/Punuru-jithendraReddy)
 
 ---
+
+### Step 4: Use the GUI
+
+* Select Source and Target Excel files (.xlsx)
+* Enter output filename (e.g., comparison\_result.xlsx)
+* Select checkboxes for sheets to generate
+* Click "Compare Files"
+
+The result Excel file will be saved in the same folder.
+
+---
+
+## Output Excel File
+
+| Sheet Name              | Description                                                             |
+| ----------------------- | ----------------------------------------------------------------------- |
+| Column Comparison       | Side-by-side list of column names with mismatches highlighted           |
+| Row-by-Row Comparison   | Entire content row-by-row with status flags                             |
+| Unique Value Comparison | Unique values present in either file but not both, by column            |
+| Stats Comparison        | Statistical metrics comparison for numeric columns (mean, median, etc.) |
+
+---
+
+## Built With
+
+* Python 3.8+
+* Tkinter / ttkbootstrap - GUI
+* Pandas - Data handling
+* Openpyxl - Excel writing
+* NumPy - Statistics
+
+---
+
+## Notes
+
+* Both files must be in `.xlsx` format
+* Column headers are assumed to be in the first row
+* Blank or missing values are handled gracefully
+
+---
+
+## License
+
+This project is open-source and free to use for educational or professional purposes.
+
+---
+
 
