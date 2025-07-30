@@ -1,246 +1,280 @@
+import tkinter as tk
+from tkinter import Menu
 import pandas as pd
-import numpy as np
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
+from ttkbootstrap.tooltip import ToolTip
+from tkinter import filedialog, Text
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill, Alignment, Font
 import os
-from openpyxl import load_workbook
-from openpyxl.styles import PatternFill
+from datetime import datetime
 
-def get_header_row(file_label):
-    while True:
-        try:
-            value = input(f"Enter the header row number (e.g., 2 for row 2) in the {file_label} file: ").strip()
-            if value == "":
-                print("Defaulting to row 1.")
-                return 0
-            row = int(value)
-            if row < 1:
-                raise ValueError
-            return row - 1
-        except ValueError:
-            print("❌ Please enter a valid row number (1 or higher).")
+def compare_files():
+    # ... (Detailed logging and setup logic remains the same) ...
+    log_output.delete("1.0", "end")
+    source_rows_var.set("Row Count: -")
+    target_rows_var.set("Row Count: -")
+    log_output.insert(END, "Starting comparison...\n"); root.update_idletasks()
 
-def read_file(file_path, header_row=0, sheet_name=None):
-    ext = os.path.splitext(file_path)[1].lower()
-    if ext in ['.xlsx', '.xls']:
-        df = pd.read_excel(file_path, sheet_name=sheet_name, header=0, skiprows=header_row)
-        return list(df.values())[0] if isinstance(df, dict) else df
-    elif ext == '.csv':
-        return pd.read_csv(file_path, header=0, skiprows=header_row)
-    else:
-        raise ValueError(f"Unsupported file type: {ext}")
-
-def get_file_name(file_path):
-    return os.path.basename(file_path)
-
-def Name(f_name):
-    parts = f_name.split("_")
-    parts.pop()
-    parts.append("Result")
-    File_Name = "_".join(parts) + ".xlsx"
-    Title = "_".join(parts)
-    return File_Name, Title
-
-def Sheet_1(source_File, Target_File, s_hr, t_hr):
-    df1 = read_file(source_File, header_row=s_hr).reset_index(drop=True)
-    df2 = read_file(Target_File, header_row=t_hr).reset_index(drop=True)
-    common_cols = df1.columns.intersection(df2.columns)
-    if len(common_cols) < 1:
-        return pd.DataFrame({"No common columns": [""]})
-
-    df_new = pd.DataFrame()
-    subheadings = ["Source", "Target", "Result"]
-
-    max_len = max(len(df1), len(df2))
-    df1 = df1.reindex(range(max_len))
-    df2 = df2.reindex(range(max_len))
-
-    for col in common_cols:
-        df_temp = pd.DataFrame()
-        df_temp["Source"] = df1[col]
-        df_temp["Target"] = df2[col]
-        df_temp["Result"] = ((df1[col].isnull() & df2[col].isnull()) | (df1[col] == df2[col])).astype(str).str.upper()
-        df_new = pd.concat([df_new, df_temp], axis=1, ignore_index=True)
-
-    flat_columns = []
-    for col in common_cols:
-        for sub in subheadings:
-            flat_columns.append(f"{col}_{sub}")
-    df_new.columns = flat_columns
-    df_new.dropna(how='all', inplace=True)
-    return df_new
-
-def Sheet_2(source_File, Target_File, s_hr, t_hr):
-    df1 = read_file(source_File, header_row=s_hr)
-    df2 = read_file(Target_File, header_row=t_hr)
-
-    s_cols = list(df1.columns)
-    s_dtypes = [str(df1[col].dtype) for col in s_cols]
-    t_cols, t_dtypes = [], []
-
-    for col in s_cols:
-        if col in df2.columns:
-            t_cols.append(col)
-            t_dtypes.append(str(df2[col].dtype))
-        else:
-            t_cols.append("-")
-            t_dtypes.append("-")
-
-    return pd.DataFrame({
-        'Source_Columns': s_cols,
-        'Source_Dtype': s_dtypes,
-        'Target_Columns': t_cols,
-        'Target_Dtype': t_dtypes
-    })
-
-def Sheet_3(source_File, Target_File, s_hr, t_hr):
-    df1 = read_file(source_File, header_row=s_hr)
-    df2 = read_file(Target_File, header_row=t_hr)
-    desc1 = df1.describe()
-    desc2 = df2.describe()
-    desc1.columns = pd.MultiIndex.from_product([["Source"], desc1.columns])
-    desc2.columns = pd.MultiIndex.from_product([["Target"], desc2.columns])
-    return pd.concat([desc1, desc2], axis=1)
-
-def Sheet_4(source_File, Target_File, s_hr, t_hr):
-    df1 = read_file(source_File, header_row=s_hr).drop_duplicates()
-    df2 = read_file(Target_File, header_row=t_hr).drop_duplicates()
-    common_cols = df1.columns.intersection(df2.columns)
-    if not common_cols.any():
-        return pd.DataFrame({"Result": ["No common columns to compare row-wise"]})
-    merged = pd.merge(df1[common_cols], df2[common_cols], how='outer', indicator=True)
-    merged['Comparison Result'] = merged['_merge'].map({
-        'left_only': 'Source Only',
-        'right_only': 'Target Only',
-        'both': 'Both'
-    })
-    merged.drop(columns=['_merge'], inplace=True)
-    return merged[['Comparison Result'] + common_cols.tolist()]
-
-def Sheet_5(source_File, Target_File, s_hr, t_hr):
-    df1 = read_file(source_File, header_row=s_hr)
-    df2 = read_file(Target_File, header_row=t_hr)
-
-    # ❗ Select only non-numeric columns from both dataframes
-    non_numeric_cols = df1.select_dtypes(exclude=[np.number]).columns
-    common_cols = non_numeric_cols.intersection(df2.select_dtypes(exclude=[np.number]).columns)
-
-    if not common_cols.any():
-        return pd.DataFrame({"Result": ["No common non-numeric columns to compare"]})
-
-    all_results = []
-
-    for col in common_cols:
-        s_unique = set(df1[col].dropna().astype(str).unique())
-        t_unique = set(df2[col].dropna().astype(str).unique())
-
-        source_only = sorted(list(s_unique - t_unique))
-        target_only = sorted(list(t_unique - s_unique))
-
-        if not source_only and not target_only:
-            continue
-
-        max_len = max(len(source_only), len(target_only))
-        source_only += [""] * (max_len - len(source_only))
-        target_only += [""] * (max_len - len(target_only))
-
-        temp_df = pd.DataFrame({
-            (col, "Only in Source"): source_only,
-            (col, "Only in Target"): target_only
-        })
-
-        all_results.append(temp_df)
-
-    if not all_results:
-        return pd.DataFrame({"Result": ["No unmatched values in any non-numeric column"]})
-
-    final_df = pd.concat(all_results, axis=1)
-    final_df.columns = pd.MultiIndex.from_tuples(final_df.columns)
-    return final_df
-
-
-def Create_file(source_File, Target_File, s_hr, t_hr):
-    f_name = get_file_name(source_File)
-    File_Name, _ = Name(f_name)
-    if os.path.exists(File_Name):
-        try:
-            os.remove(File_Name)
-            print(f"⚠️ Existing result file '{File_Name}' deleted.")
-        except Exception as e:
-            print(f"❌ Cannot delete '{File_Name}': {e}")
-            raise
-
-    df_S1 = Sheet_1(source_File, Target_File, s_hr, t_hr)
-    df_S2 = Sheet_2(source_File, Target_File, s_hr, t_hr)
-    df_S3 = Sheet_3(source_File, Target_File, s_hr, t_hr)
-    df_S4 = Sheet_4(source_File, Target_File, s_hr, t_hr)
-    df_S5 = Sheet_5(source_File, Target_File, s_hr, t_hr)
-
-    with pd.ExcelWriter(File_Name, engine='openpyxl') as writer:
-        df_S1.to_excel(writer, sheet_name='Value Comparison', index=False)
-        df_S2.to_excel(writer, sheet_name='Column Metadata', index=False)
-        df_S3.to_excel(writer, sheet_name='Summary Stats')
-        df_S4.to_excel(writer, sheet_name='Row Differences', index=False)
-        df_S5.to_excel(writer, sheet_name='Unique Values')
-
-    wb = load_workbook(File_Name)
-    yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
-    red_fill = PatternFill(start_color='FFCCCC', end_color='FFCCCC', fill_type='solid')
-
-    sheet = wb['Value Comparison']
-    for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row):
-        for cell in row:
-            if str(cell.value).strip().upper() == "FALSE":
-                cell.fill = yellow_fill
-
-    sheet = wb['Column Metadata']
-    for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row):
-        for cell in row:
-            if cell.value == "-":
-                cell.fill = red_fill
-
-    # Delete row 3 from 'Unique Values' sheet
     try:
-        sheet = wb['Unique Values']
-        sheet.delete_rows(3)
-        #print("🗑️ Deleted 3rd row from 'Unique Values' sheet.")
+        # ... (File path, header, and filename logic remains the same) ...
+        src_path = source_path_entry.get()
+        tgt_path = target_path_entry.get()
+        base_filename = output_file_entry.get()
+        case_sensitive = not case_insensitive_var.get()
+
+        if not all([src_path, tgt_path, base_filename]):
+            log_output.insert(END, "❌ Error: Please fill all required fields.\n"); return
+        try:
+            src_header_val = int(source_header_entry.get())
+            tgt_header_val = int(target_header_entry.get())
+            if src_header_val <= 0 or tgt_header_val <= 0: raise ValueError("Header row must be > 0.")
+            src_header, tgt_header = src_header_val - 1, tgt_header_val - 1
+        except Exception as e:
+            log_output.insert(END, f"❌ Error: Invalid header row input: {str(e)}\n"); return
+
+        log_output.insert(END, "Reading source file...\n"); root.update_idletasks()
+        df1 = pd.read_excel(src_path, header=src_header)
+        source_rows_var.set(f"Row Count: {len(df1)}")
+        log_output.insert(END, f"  ▶ Source file loaded: {len(df1)} rows.\n"); root.update_idletasks()
+
+        log_output.insert(END, "Reading target file...\n"); root.update_idletasks()
+        df2 = pd.read_excel(tgt_path, header=tgt_header)
+        target_rows_var.set(f"Row Count: {len(df2)}")
+        log_output.insert(END, f"  ▶ Target file loaded: {len(df2)} rows.\n"); root.update_idletasks()
+
+        name, ext = os.path.splitext(base_filename); ext = ext or ".xlsx"
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        filename_with_ts = f"{name}_{timestamp}{ext}"
+        output_file = os.path.join(os.getcwd(), filename_with_ts)
+        
+        # ... (Column processing logic remains the same) ...
+        df1_original_cols = df1.columns; df2_original_cols = df2.columns
+        if not case_sensitive:
+            df1.columns = df1.columns.str.lower(); df2.columns = df2.columns.str.lower()
+            df1_original_cols = df1_original_cols.str.lower(); df2_original_cols = df2_original_cols.str.lower()
+        common_cols = df1.columns.intersection(df2.columns)
+        if common_cols.empty: log_output.insert(END, "⚠️ Warning: No common columns found.\n"); root.update_idletasks()
+
+        wb = Workbook(); wb.remove(wb.active)
+        bold_font = Font(bold=True)
+        header_alignment = Alignment(horizontal='center', vertical='center')
+        
+        # --- Sheet 1 and 2 Generation (Unchanged) ---
+        if col_sheet_var.get():
+            log_output.insert(END, "Generating 'Column Name Comparison' sheet...\n"); root.update_idletasks()
+            # ... (Sheet 1 logic is unchanged)
+            sheet1 = wb.create_sheet("Column Name Comparison")
+            sheet1.append(["Column Name", "In Source File", "In Target File"])
+            for cell in sheet1[1]: cell.font = bold_font
+            mismatch_fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
+            all_cols = sorted(list(set(df1_original_cols) | set(df2_original_cols)))
+            for col in all_cols:
+                in_src = "Yes" if col in df1_original_cols else "No"
+                in_tgt = "Yes" if col in df2_original_cols else "No"
+                sheet1.append([col, in_src, in_tgt])
+                if in_src != in_tgt:
+                    for cell in sheet1[sheet1.max_row]: cell.fill = mismatch_fill
+        if row_sheet_var.get():
+            log_output.insert(END, "Generating 'Row Comparison' sheet...\n"); root.update_idletasks()
+            # ... (Sheet 2 logic is unchanged)
+            sheet2 = wb.create_sheet("Row Comparison")
+            df1_common = df1[common_cols].copy(); df2_common = df2[common_cols].copy()
+            df1_common["_source"] = "Source"; df2_common["_source"] = "Target"
+            combined = pd.concat([df1_common, df2_common], ignore_index=True)
+            combined["row_tuple"] = combined[common_cols].apply(lambda row: tuple(str(x) for x in row), axis=1)
+            combined["dup_count"] = combined["row_tuple"].duplicated(keep=False)
+            sheet2.append(["Status"] + list(common_cols))
+            for cell in sheet2[1]: cell.font = bold_font
+            for _, row in combined.iterrows():
+                status = "In Both Files" if row["dup_count"] else f"Only in {row['_source']}"
+                values = [status] + [row[col] for col in common_cols]
+                sheet2.append(values)
+
+        # --- Sheet 3: Unique Values (Unchanged) ---
+        if uniq_sheet_var.get():
+            log_output.insert(END, "Generating 'Unique Values' sheet...\n"); root.update_idletasks()
+            sheet3 = wb.create_sheet("Unique Values")
+            unique_data = {}; max_unique_rows = 0
+            for col in common_cols:
+                src_unique = set(df1[col].dropna().astype(str).unique()); tgt_unique = set(df2[col].dropna().astype(str).unique())
+                only_src = sorted(list(src_unique - tgt_unique)); only_tgt = sorted(list(tgt_unique - src_unique))
+                unique_data[col] = {'source': only_src, 'target': only_tgt}
+                max_unique_rows = max(max_unique_rows, len(only_src), len(only_tgt))
+            col_idx = 1
+            for col in common_cols:
+                cell = sheet3.cell(row=1, column=col_idx, value=col); cell.alignment = header_alignment; cell.font = bold_font
+                sheet3.merge_cells(start_row=1, start_column=col_idx, end_row=1, end_column=col_idx + 1)
+                sub_head1 = sheet3.cell(row=2, column=col_idx, value="Only in Source"); sub_head2 = sheet3.cell(row=2, column=col_idx + 1, value="Only in Target")
+                sub_head1.font = bold_font; sub_head2.font = bold_font; col_idx += 2
+            for i in range(max_unique_rows):
+                col_idx = 1
+                for col in common_cols:
+                    col_uniques = unique_data[col]
+                    if i < len(col_uniques['source']): sheet3.cell(row=i + 3, column=col_idx, value=col_uniques['source'][i])
+                    if i < len(col_uniques['target']): sheet3.cell(row=i + 3, column=col_idx + 1, value=col_uniques['target'][i])
+                    col_idx += 2
+            
+        # --- Sheet 4: Summary Stats (MODIFIED LAYOUT) ---
+        if stats_sheet_var.get():
+            log_output.insert(END, "Generating 'Summary Stats' sheet...\n"); root.update_idletasks()
+            sheet4 = wb.create_sheet("Summary Stats")
+            num_cols = df1.select_dtypes(include='number').columns.intersection(df2.select_dtypes(include='number').columns)
+            stats_to_calc = ['count', 'mean', 'median', 'min', 'max', 'sum']
+            
+            # Prepare all stats data first
+            stats_data = {}
+            for col in num_cols:
+                col_stats = []
+                for stat_name in stats_to_calc:
+                    try:
+                        s_val = getattr(df1[col], stat_name)()
+                        t_val = getattr(df2[col], stat_name)()
+                        col_stats.append({'stat': stat_name, 'source': s_val, 'target': t_val})
+                    except Exception:
+                        col_stats.append({'stat': stat_name, 'source': 'N/A', 'target': 'N/A'})
+                stats_data[col] = col_stats
+                
+            # Write headers side-by-side
+            col_idx = 1
+            for col in num_cols:
+                cell = sheet4.cell(row=1, column=col_idx, value=col)
+                cell.alignment = header_alignment
+                cell.font = bold_font
+                sheet4.merge_cells(start_row=1, start_column=col_idx, end_row=1, end_column=col_idx + 2)
+                
+                sheet4.cell(row=2, column=col_idx, value="Stat").font = bold_font
+                sheet4.cell(row=2, column=col_idx + 1, value="Source").font = bold_font
+                sheet4.cell(row=2, column=col_idx + 2, value="Target").font = bold_font
+                col_idx += 3
+            
+            # Write data rows
+            for i, stat_name in enumerate(stats_to_calc):
+                col_idx = 1
+                for col in num_cols:
+                    stat_values = stats_data[col][i]
+                    sheet4.cell(row=i + 3, column=col_idx, value=stat_values['stat'])
+                    sheet4.cell(row=i + 3, column=col_idx + 1, value=stat_values['source'])
+                    sheet4.cell(row=i + 3, column=col_idx + 2, value=stat_values['target'])
+                    col_idx += 3
+
+        # ... (Saving logic remains the same) ...
+        if not wb.sheetnames:
+             log_output.insert(END, "⚠️ Warning: No sheets selected. Nothing to save.\n"); return
+        log_output.insert(END, f"Saving file to {output_file}...\n"); root.update_idletasks()
+        wb.save(output_file)
+        log_output.insert(END, f"\n✅ Comparison successful!\nOutput saved to: {output_file}\n")
+    except FileNotFoundError as e:
+        log_output.insert(END, f"❌ Error: File not found - {e.filename}. Please check the path.\n")
     except Exception as e:
-        print(f"⚠️ Could not delete 3rd row from 'Unique Values': {e}")
-    try:
-        sheet = wb['Summary Stats']
-        sheet.delete_rows(3)
-        #print("🗑️ Deleted 3rd row from 'Summary Stats' sheet.")
-    except Exception as e:
-        print(f"⚠️ Could not delete 3rd row from 'Summary Stats': {e}")
+        log_output.insert(END, f"❌ An unexpected error occurred: {str(e)}\n")
 
-    wb.save(File_Name)
-    print(f"\n✅ Comparison file created: {File_Name}\n")
+def clear_fields():
+    # ... (Function remains the same)
+    log_output.delete("1.0", "end")
+    source_path_entry.delete(0, END); target_path_entry.delete(0, END)
+    source_header_entry.delete(0, END); source_header_entry.insert(0, "1")
+    target_header_entry.delete(0, END); target_header_entry.insert(0, "1")
+    output_file_entry.delete(0, END); output_file_entry.insert(0, "comparison_output")
+    case_insensitive_var.set(True); col_sheet_var.set(True); row_sheet_var.set(True); uniq_sheet_var.set(True); stats_sheet_var.set(True)
+    source_rows_var.set("Row Count: -"); target_rows_var.set("Row Count: -")
+    log_output.insert(END, "Fields cleared. Ready for new comparison.\n")
 
-if __name__ == "__main__":
+# --- GUI SETUP (MODIFIED WITH ICONS, THEMES, TOOLTIPS) ---
+root = ttk.Window(themename="litera")
+root.title("Excel File Comparison Tool")
+root.geometry("850x700")
 
-    source_File = 'My_Customers_Source.xlsx'
-    Target_File = 'My_Customers_Target.xlsx'
+# --- Theme Changer Function ---
+def change_theme(theme_name):
+    root.style.theme_use(theme_name)
 
-    print("🔍 Checking file paths...")
-    if not os.path.exists(source_File) or not os.path.exists(Target_File):
-        print("❌ One or both file paths are invalid.")
-    else:
-        print("✅ Files found. Proceeding with header row detection...")
-        try:
-            source_header_row = get_header_row("source")
-            print(f"✅ Source header row detected at line {source_header_row + 1}")
-        except Exception as e:
-            print(f"❌ Failed to detect source header row: {e}")
-            exit()
+# --- Menu Bar for Themes ---
+menubar = Menu(root)
+root.config(menu=menubar)
+theme_menu = Menu(menubar, tearoff=0)
+menubar.add_cascade(label="Theme", menu=theme_menu)
+theme_menu.add_radiobutton(label="Litera (Light)", command=lambda: change_theme('litera'))
+theme_menu.add_radiobutton(label="Superhero (Dark)", command=lambda: change_theme('superhero'))
 
-        try:
-            target_header_row = get_header_row("target")
-            print(f"✅ Target header row detected at line {target_header_row + 1}")
-        except Exception as e:
-            print(f"❌ Failed to detect target header row: {e}")
-            exit()
+# --- Main Input Frame ---
+inputs = ttk.Frame(root, padding=10)
+inputs.pack(fill=X, padx=10, pady=5)
+inputs.columnconfigure(1, weight=1)
 
-        print("🚀 Starting comparison process...")
-        try:
-            Create_file(source_File, Target_File, source_header_row, target_header_row)
-            print("✅ Comparison completed successfully.")
-        except Exception as e:
-            print(f"❌ Comparison process failed: {e}")
+source_rows_var = tk.StringVar(value="Row Count: -")
+target_rows_var = tk.StringVar(value="Row Count: -")
+
+# --- UI Elements with Icons and Tooltips ---
+ttk.Label(inputs, text="Source File:").grid(row=0, column=0, sticky='w', padx=5, pady=5)
+source_path_entry = ttk.Entry(inputs, width=70)
+source_path_entry.grid(row=0, column=1, sticky='ew', padx=5, pady=5)
+browse_src_btn = ttk.Button(inputs, text="Browse", style="outline.TButton", command=lambda: [source_path_entry.delete(0, 'end'), source_path_entry.insert(0, filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx *.xls")]))])
+browse_src_btn.grid(row=0, column=2, padx=5, pady=5)
+ToolTip(browse_src_btn, text="Select the first Excel file to compare (Source)")
+
+ttk.Label(inputs, text="Source Header Row:").grid(row=1, column=0, sticky='w', padx=5, pady=5)
+source_header_entry = ttk.Entry(inputs, width=10)
+source_header_entry.insert(0, "1")
+source_header_entry.grid(row=1, column=1, sticky='w', padx=5, pady=5)
+ToolTip(source_header_entry, text="The row number containing column headers (e.g., 1)")
+ttk.Label(inputs, textvariable=source_rows_var, style="secondary.TLabel").grid(row=1, column=2, sticky='w', padx=10)
+
+ttk.Label(inputs, text="Target File:").grid(row=2, column=0, sticky='w', padx=5, pady=5)
+target_path_entry = ttk.Entry(inputs, width=70)
+target_path_entry.grid(row=2, column=1, sticky='ew', padx=5, pady=5)
+browse_tgt_btn = ttk.Button(inputs, text="Browse", style="outline.TButton", command=lambda: [target_path_entry.delete(0, 'end'), target_path_entry.insert(0, filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx *.xls")]))])
+browse_tgt_btn.grid(row=2, column=2, padx=5, pady=5)
+ToolTip(browse_tgt_btn, text="Select the second Excel file to compare (Target)")
+
+ttk.Label(inputs, text="Target Header Row:").grid(row=3, column=0, sticky='w', padx=5, pady=5)
+target_header_entry = ttk.Entry(inputs, width=10)
+target_header_entry.insert(0, "1")
+target_header_entry.grid(row=3, column=1, sticky='w', padx=5, pady=5)
+ToolTip(target_header_entry, text="The row number containing column headers (e.g., 1)")
+ttk.Label(inputs, textvariable=target_rows_var, style="secondary.TLabel").grid(row=3, column=2, sticky='w', padx=10)
+
+ttk.Label(inputs, text="Output File Name:").grid(row=4, column=0, sticky='w', padx=5, pady=5)
+output_file_entry = ttk.Entry(inputs, width=50)
+output_file_entry.insert(0, "comparison_output")
+output_file_entry.grid(row=4, column=1, sticky='w', padx=5, pady=5)
+ToolTip(output_file_entry, text="Base name for the report. A timestamp will be added automatically.")
+
+case_insensitive_var = tk.BooleanVar(value=True)
+ci_check = ttk.Checkbutton(inputs, text="Case-Insensitive Column Comparison", variable=case_insensitive_var, style="primary.TCheckbutton")
+ci_check.grid(row=5, column=1, sticky='w', pady=10)
+ToolTip(ci_check, text="If checked, 'ColumnA' and 'columna' will be treated as the same column.")
+
+sheet_select = ttk.Labelframe(root, text="Sheets to Generate", padding=10)
+sheet_select.pack(fill=X, padx=10, pady=5)
+#...(Checkbuttons are unchanged)
+col_sheet_var = tk.BooleanVar(value=True); row_sheet_var = tk.BooleanVar(value=True); uniq_sheet_var = tk.BooleanVar(value=True); stats_sheet_var = tk.BooleanVar(value=True)
+ttk.Checkbutton(sheet_select, text="Column Names", variable=col_sheet_var, style="primary.TCheckbutton").pack(side=LEFT, padx=10)
+ttk.Checkbutton(sheet_select, text="Row Comparison", variable=row_sheet_var, style="primary.TCheckbutton").pack(side=LEFT, padx=10)
+ttk.Checkbutton(sheet_select, text="Unique Values", variable=uniq_sheet_var, style="primary.TCheckbutton").pack(side=LEFT, padx=10)
+ttk.Checkbutton(sheet_select, text="Summary Stats", variable=stats_sheet_var, style="primary.TCheckbutton").pack(side=LEFT, padx=10)
+
+button_frame = ttk.Frame(root)
+button_frame.pack(pady=20)
+compare_btn = ttk.Button(button_frame, text=" Compare Files", command=compare_files, style="success.TButton")
+compare_btn.pack(side=LEFT, padx=10)
+clear_btn = ttk.Button(button_frame, text=" Clear", command=clear_fields, style="danger.outline.TButton")
+clear_btn.pack(side=LEFT, padx=10)
+ToolTip(compare_btn, "Run the comparison and generate the Excel report")
+ToolTip(clear_btn, "Reset all fields to their default values")
+
+log_frame = ttk.Labelframe(root, text="Log Output", padding=10)
+log_frame.pack(pady=10, padx=10, fill=BOTH, expand=True)
+log_output = Text(log_frame, height=10, width=100, wrap='word', relief="solid", borderwidth=1, font=("Consolas", 10))
+log_output.pack(fill=BOTH, expand=True)
+
+# Set icons after the mainloop starts to ensure the window exists
+def set_icons():
+    compare_btn.config(image='tool-button-apply-symbolic', compound=LEFT)
+    clear_btn.config(image='edit-clear-symbolic', compound=LEFT)
+    browse_src_btn.config(image='folder-open-symbolic', compound=LEFT)
+    browse_tgt_btn.config(image='folder-open-symbolic', compound=LEFT)
+
+root.after(100, set_icons)
+root.mainloop()
